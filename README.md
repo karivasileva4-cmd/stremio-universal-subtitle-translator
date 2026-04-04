@@ -70,7 +70,7 @@ The port is `7001` by default so it can coexist with the original Sorani-only ad
 8. Install the generated manifest URL in Stremio.
 
   ```Watch My Youtube Video Tutorial
-  https://youtu.be/nLytVXyluMg
+  https://youtu.be/nLytVXyluMg --> (Watch My Youtube Video Tutorial)
   ```
 ## Configuration Fields
 
