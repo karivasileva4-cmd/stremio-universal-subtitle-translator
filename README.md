@@ -38,7 +38,7 @@ This means the add-on can follow the currently available Microsoft Translator la
 
 This universal version lives in:
 
-`C:\Users\zanyar\Documents\idk\stremio-universal-subtitle-translator`
+`C:\Users\{YOUR USERNAME}\Documents\idk\stremio-universal-subtitle-translator`
 
 The original Kurdish Sorani-specific version is left untouched in the original folder.
 
@@ -47,7 +47,7 @@ The original Kurdish Sorani-specific version is left untouched in the original f
 From this folder:
 
 ```powershell
-node C:\Users\zanyar\Documents\idk\stremio-universal-subtitle-translator\src\server.js
+node C:\Users\{YOUR USERNAME}\Documents\idk\stremio-universal-subtitle-translator\src\server.js
 ```
 
 The universal clone defaults to:
