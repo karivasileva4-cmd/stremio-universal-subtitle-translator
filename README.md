@@ -69,6 +69,9 @@ The port is `7001` by default so it can coexist with the original Sorani-only ad
 7. Click `Build Manifest URL`.
 8. Install the generated manifest URL in Stremio.
 
+  ```Watch My Youtube Video Tutorial
+  https://youtu.be/nLytVXyluMg
+  ```
 ## Configuration Fields
 
 - `targetLanguageCode`: Microsoft Translator target language code
