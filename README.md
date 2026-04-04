@@ -1,13 +1,23 @@
-ONLINE LINK IF U R TO LAZY TO SETUPT SO USE THIS ONE: https://stremio-universal-subtitle-translator-production.up.railway.app/configure
+ONLINE LINK (if you’re too lazy to set it up 😄):
+https://stremio-universal-subtitle-translator-production.up.railway.app/configure
 
-1. IN "Source Subtitle Add-on Manifest URLs" BOX PASTE THIS:
-"https://opensubtitles-v3.strem.io/manifest.json"
+**Setup Guide**
+1. Select your target language
+In “Target Translation Language”, click the dropdown and choose the language you want.
 
-2. CLICK "Build Manifest URL"
+2. Add subtitle source
+In “Source Subtitle Add-on Manifest URLs”, paste:
 
-3. SCROLL DOWN AND COPY THE MANIFEST URL
+https://opensubtitles-v3.strem.io/manifest.json
 
-4. OPEN STREMIO GO TO ADDON --> CLICK "Add addon" PASTE THE MANIFEST URL AND DONE
+3. Build the manifest
+Click “Build Manifest URL”.
+
+4. Copy the generated URL
+Scroll down and copy the manifest URL.
+
+5. Add to Stremio
+Open Stremio → go to Add-ons → click “Add add-on” → paste the manifest URL → Don
 
 # Universal Subtitle Translator for Stremio
 
