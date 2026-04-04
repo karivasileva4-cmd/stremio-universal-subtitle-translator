@@ -1,4 +1,4 @@
-ONLINE LINK IF U R TO LAZY TO SETUPT SO USE THIS ONE: [stremio-universal-subtitle-trans.railway.internal
+ONLINE LINK IF U R TO LAZY TO SETUPT SO USE THIS ONE: [[stremio-universal-subtitle-trans.railway.internal](https://stremio-universal-subtitle-translator-production.up.railway.app/configure)
 ](https://stremio-universal-subtitle-translator-production.up.railway.app/configure)
 
 1. IN "Source Subtitle Add-on Manifest URLs" BOX PASTE THIS:
