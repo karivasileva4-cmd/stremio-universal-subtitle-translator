@@ -202,7 +202,7 @@ function createServer() {
 
 if (require.main === module) {
   const server = createServer();
-  const host = process.env.HOST || "127.0.0.1";
+  const host = process.env.HOST || "0.0.0.0";
   const port = Number.parseInt(process.env.PORT, 10) || 7001;
 
   server.listen(port, host, () => {
