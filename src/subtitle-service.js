@@ -217,13 +217,14 @@ function buildTranslatedSubtitleEntries({ candidates, config, configSegment, ori
     });
 
     return {
-      id: variantLabel,
-      lang: config.displayLanguage,
+      id: `Bulgarian - ${variantLabel}`,
+      lang: "bul",
+      language: "bul",
+      title: `Bulgarian - ${variantLabel}`,
       url: new URL(`/${configSegment}/translated/${payload}.vtt`, originBaseUrl).toString()
     };
   });
 }
-
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
