@@ -119,7 +119,7 @@ function normalizeConfig(raw = {}) {
       raw.sourceLanguageCodes || raw.sourceLanguageCode || DEFAULT_SOURCE_LANGUAGE_CODES
     ),
     translatorBatchSize: toPositiveInteger(raw.translatorBatchSize, DEFAULT_TRANSLATOR_BATCH_SIZE),
-    useLocalStremioProxy: toBoolean(raw.useLocalStremioProxy, true),
+    useLocalStremioProxy: toBoolean(raw.useLocalStremioProxy, false),
     enableEmbeddedSubtitles: toBoolean(raw.enableEmbeddedSubtitles, true),
     stremioEngineUrl: safeNormalizeEngineUrl(raw.stremioEngineUrl, DEFAULT_STREMIO_ENGINE_URL)
   };
