@@ -10,18 +10,13 @@ function createManifest(config) {
 
   return {
     id: `${BASE_ID}.${configHash(config)}`,
-    version: "0.1.0",
+    version: "0.1.1",
     name: BASE_NAME,
     description:
       "Translates English subtitle tracks into any Microsoft Translator target language, with optional embedded subtitle fallback.",
     logo: "https://stremio.com/website/stremio-logo-small.png",
-    resources: [
-      {
-        name: "subtitles",
-        types: ["movie", "series", "channel", "tv"]
-      }
-    ],
-    types: ["movie", "series", "channel", "tv"],
+    resources: ["subtitles"],
+    types: ["movie", "series"],
     catalogs: [],
     behaviorHints: {
       configurable: true,
