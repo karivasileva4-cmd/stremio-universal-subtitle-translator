@@ -537,14 +537,15 @@ async function translateTextsAuto(texts, fetchImpl = fetch, config = {}) {
     return translateTextsWithEdge(texts, fetchImpl, config);
   }
 
-  try {
-    return await translateTextsWithGemini(texts, fetchImpl, config);
-  } catch (error) {
-    console.warn(`[Translation] Gemini failed, falling back to Edge: ${error.message}`);
-    return translateTextsWithEdge(texts, fetchImpl, config);
-  }
-}
+ try {
+  console.log("[Translation] Using Gemini translator");
 
+  return await translateTextsWithGemini(texts, fetchImpl, config);
+} catch (error) {
+  console.warn(`[Translation] Gemini failed, falling back to Edge: ${error.message}`);
+
+  return translateTextsWithEdge(texts, fetchImpl, config);
+}
 async function translateCueTexts(cueTexts, config, fetchImpl = fetch, translateImpl = translateTextsAuto) {
   const translatedTexts = [...cueTexts];
   const indexesToTranslate = [];
