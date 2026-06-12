@@ -473,7 +473,7 @@ async function translateTextsWithGemini(texts, fetchImpl = fetch, config = {}) {
     return [];
   }
 
-  const keys = getGeminiApiKeys(config);
+  const keys = getGeminiApiKeys();
 
   if (keys.length === 0) {
     throw new Error("Gemini provider selected but no GEMINI_API_KEY_* environment variables are configured");
