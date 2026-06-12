@@ -382,10 +382,16 @@ async function translateTextsWithEdge(texts, fetchImpl = fetch, config = { targe
   });
 }
 
-function getGeminiApiKeys(config) {
-  return Array.isArray(config.geminiApiKeys)
-    ? config.geminiApiKeys.map((key) => String(key || "").trim()).filter(Boolean)
-    : [];
+function getGeminiApiKeys() {
+  return [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY_4,
+    process.env.GEMINI_API_KEY_5
+  ]
+    .map((key) => String(key || "").trim())
+    .filter(Boolean);
 }
 
 function pickGeminiApiKey(keys) {
