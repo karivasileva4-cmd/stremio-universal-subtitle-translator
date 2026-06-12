@@ -458,9 +458,15 @@ function parseGeminiJsonArray(text, expectedLength, fallbackTexts) {
     throw new Error("Gemini response was not a JSON array");
   }
 
-  if (parsed.length !== expectedLength) {
-    throw new Error(`Gemini response length mismatch: expected ${expectedLength}, got ${parsed.length}`);
+  if (parsed.length < expectedLength) {
+  while (parsed.length < expectedLength) {
+    parsed.push(fallbackTexts[parsed.length] || "");
   }
+}
+
+if (parsed.length > expectedLength) {
+  parsed = parsed.slice(0, expectedLength);
+}
 
   return parsed.map((entry, index) => {
     const translated = typeof entry === "string" ? entry : String(entry || "");
