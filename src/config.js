@@ -107,18 +107,6 @@ function toNumber(value, defaultValue) {
   return Number.isFinite(parsed) ? parsed : defaultValue;
 }
 
-function getGeminiApiKeys() {
-  return [
-    process.env.GEMINI_API_KEY_1,
-    process.env.GEMINI_API_KEY_2,
-    process.env.GEMINI_API_KEY_3,
-    process.env.GEMINI_API_KEY_4,
-    process.env.GEMINI_API_KEY_5
-  ]
-    .map((key) => String(key || "").trim())
-    .filter(Boolean);
-}
-
 function safeNormalizeEngineUrl(value, defaultValue = DEFAULT_STREMIO_ENGINE_URL) {
   try {
     return normalizeEngineUrl(value || defaultValue);
@@ -151,7 +139,6 @@ function normalizeConfig(raw = {}) {
       raw.translatorProvider || process.env.TRANSLATOR_PROVIDER
     ),
     geminiModel: String(process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL).trim(),
-    geminiApiKeys: getGeminiApiKeys(),
     geminiTemperature: toNumber(process.env.GEMINI_TEMPERATURE, 0.3),
     geminiThinkingBudget: toNumber(process.env.GEMINI_THINKING_BUDGET, 0)
   };
@@ -200,4 +187,4 @@ module.exports = {
   manifestUrlToBaseUrl,
   normalizeConfig,
   normalizeManifestUrl
-};
+};;
