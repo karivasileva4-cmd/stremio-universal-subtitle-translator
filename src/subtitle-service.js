@@ -20,8 +20,11 @@ const {
 
 const execFileAsync = promisify(execFile);
 const EDGE_TRANSLATE_BASE_URL = "https://edge.microsoft.com/translate/translatetext";
+const GEMINI_API_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const LOCAL_STREMIO_SUBTITLE_PROXY = "http://127.0.0.1:11470/subtitles.vtt?from=";
 const TRANSLATION_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+
+let geminiKeyCursor = 0;
 
 function parseExtraArgs(segment) {
   if (!segment) {
@@ -225,6 +228,7 @@ function buildTranslatedSubtitleEntries({ candidates, config, configSegment, ori
     };
   });
 }
+
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -234,6 +238,8 @@ function createTranslationCacheKey(config, payload) {
     JSON.stringify({
       displayLanguage: config.displayLanguage,
       targetLanguageCode: config.targetLanguageCode,
+      translatorProvider: config.translatorProvider || "edge",
+      geminiModel: config.geminiModel || "",
       kind: payload.kind || "external",
       sourceUrl: payload.sourceUrl,
       sourceManifestUrl: payload.sourceManifestUrl,
@@ -376,7 +382,164 @@ async function translateTextsWithEdge(texts, fetchImpl = fetch, config = { targe
   });
 }
 
-async function translateCueTexts(cueTexts, config, fetchImpl = fetch, translateImpl = translateTextsWithEdge) {
+function getGeminiApiKeys(config) {
+  return Array.isArray(config.geminiApiKeys)
+    ? config.geminiApiKeys.map((key) => String(key || "").trim()).filter(Boolean)
+    : [];
+}
+
+function pickGeminiApiKey(keys) {
+  const key = keys[geminiKeyCursor % keys.length];
+  geminiKeyCursor = (geminiKeyCursor + 1) % keys.length;
+  return key;
+}
+
+function buildGeminiPrompt(texts, config) {
+  const target = config.displayLanguage || config.targetLanguageCode || "Bulgarian";
+
+  return [
+    `Translate the following subtitle lines from English to ${target}.`,
+    "Return ONLY a valid JSON array of strings.",
+    "The output array must have exactly the same number of items and the same order.",
+    "Preserve names, numbers, punctuation, tone, short subtitle style, and line meaning.",
+    "Do not add explanations, markdown, numbering, or extra text.",
+    "",
+    JSON.stringify(texts)
+  ].join("\n");
+}
+
+function extractGeminiText(payload) {
+  const candidates = Array.isArray(payload && payload.candidates) ? payload.candidates : [];
+
+  for (const candidate of candidates) {
+    const parts = candidate && candidate.content && Array.isArray(candidate.content.parts)
+      ? candidate.content.parts
+      : [];
+
+    const text = parts
+      .map((part) => (typeof part.text === "string" ? part.text : ""))
+      .join("")
+      .trim();
+
+    if (text) {
+      return text;
+    }
+  }
+
+  return "";
+}
+
+function parseGeminiJsonArray(text, expectedLength, fallbackTexts) {
+  const cleaned = String(text || "")
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  let parsed;
+
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (error) {
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (!match) {
+      throw error;
+    }
+    parsed = JSON.parse(match[0]);
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error("Gemini response was not a JSON array");
+  }
+
+  if (parsed.length !== expectedLength) {
+    throw new Error(`Gemini response length mismatch: expected ${expectedLength}, got ${parsed.length}`);
+  }
+
+  return parsed.map((entry, index) => {
+    const translated = typeof entry === "string" ? entry : String(entry || "");
+    return translated.trim() ? translated : fallbackTexts[index];
+  });
+}
+
+async function translateTextsWithGemini(texts, fetchImpl = fetch, config = {}) {
+  if (texts.length === 0) {
+    return [];
+  }
+
+  const keys = getGeminiApiKeys(config);
+
+  if (keys.length === 0) {
+    throw new Error("Gemini provider selected but no GEMINI_API_KEY_* environment variables are configured");
+  }
+
+  const model = String(config.geminiModel || "gemini-2.5-flash-lite").trim();
+  const temperature = Number.isFinite(config.geminiTemperature) ? config.geminiTemperature : 0.3;
+  const thinkingBudget = Number.isFinite(config.geminiThinkingBudget) ? config.geminiThinkingBudget : 0;
+  const prompt = buildGeminiPrompt(texts, config);
+
+  let lastError;
+
+  for (let attempt = 0; attempt < keys.length; attempt += 1) {
+    const apiKey = pickGeminiApiKey(keys);
+    const url = `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    const body = {
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }]
+        }
+      ],
+      generationConfig: {
+        temperature,
+        responseMimeType: "application/json",
+        thinkingConfig: {
+          thinkingBudget
+        }
+      }
+    };
+
+    try {
+      const response = await fetchImpl(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(`Gemini request failed (${response.status}): ${errorText.slice(0, 300)}`);
+      }
+
+      const payload = await response.json();
+      const text = extractGeminiText(payload);
+      return parseGeminiJsonArray(text, texts.length, texts);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Gemini translation failed");
+}
+
+async function translateTextsAuto(texts, fetchImpl = fetch, config = {}) {
+  if (String(config.translatorProvider || "edge").toLowerCase() !== "gemini") {
+    return translateTextsWithEdge(texts, fetchImpl, config);
+  }
+
+  try {
+    return await translateTextsWithGemini(texts, fetchImpl, config);
+  } catch (error) {
+    console.warn(`[Translation] Gemini failed, falling back to Edge: ${error.message}`);
+    return translateTextsWithEdge(texts, fetchImpl, config);
+  }
+}
+
+async function translateCueTexts(cueTexts, config, fetchImpl = fetch, translateImpl = translateTextsAuto) {
   const translatedTexts = [...cueTexts];
   const indexesToTranslate = [];
   const sourceTexts = [];
@@ -404,7 +567,7 @@ async function getTranslatedSubtitleVtt({
   config,
   payload,
   fetchImpl = fetch,
-  translateImpl = translateTextsWithEdge,
+  translateImpl = translateTextsAuto,
   cache,
   execFileImpl = execFileAsync
 }) {
@@ -431,6 +594,7 @@ async function getTranslatedSubtitleVtt({
 
 module.exports = {
   EDGE_TRANSLATE_BASE_URL,
+  GEMINI_API_BASE_URL,
   LOCAL_STREMIO_SUBTITLE_PROXY,
   buildEdgeTranslateUrl,
   buildSubtitleResourceUrl,
@@ -444,5 +608,7 @@ module.exports = {
   isEnglishSubtitle,
   parseExtraArgs,
   translateCueTexts,
-  translateTextsWithEdge
+  translateTextsAuto,
+  translateTextsWithEdge,
+  translateTextsWithGemini
 };
