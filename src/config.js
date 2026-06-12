@@ -5,6 +5,8 @@ const DEFAULT_TARGET_LANGUAGE_CODE = "ku";
 const DEFAULT_DISPLAY_LANGUAGE = "KU";
 const DEFAULT_SOURCE_LANGUAGE_CODES = ["eng", "en", "english"];
 const DEFAULT_TRANSLATOR_BATCH_SIZE = 25;
+const DEFAULT_TRANSLATOR_PROVIDER = "edge";
+const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite";
 
 function base64UrlEncode(value) {
   return Buffer.from(value, "utf8")
@@ -77,6 +79,11 @@ function normalizeDisplayLanguage(value, targetLanguageCode) {
   return normalized || String(targetLanguageCode || DEFAULT_TARGET_LANGUAGE_CODE).toUpperCase();
 }
 
+function normalizeTranslatorProvider(value) {
+  const normalized = String(value || DEFAULT_TRANSLATOR_PROVIDER).trim().toLowerCase();
+  return ["gemini", "edge"].includes(normalized) ? normalized : DEFAULT_TRANSLATOR_PROVIDER;
+}
+
 function toBoolean(value, defaultValue) {
   if (value == null || value === "") {
     return defaultValue;
@@ -93,6 +100,23 @@ function toBoolean(value, defaultValue) {
 function toPositiveInteger(value, defaultValue) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
+}
+
+function toNumber(value, defaultValue) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+function getGeminiApiKeys() {
+  return [
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3,
+    process.env.GEMINI_API_KEY_4,
+    process.env.GEMINI_API_KEY_5
+  ]
+    .map((key) => String(key || "").trim())
+    .filter(Boolean);
 }
 
 function safeNormalizeEngineUrl(value, defaultValue = DEFAULT_STREMIO_ENGINE_URL) {
@@ -121,7 +145,15 @@ function normalizeConfig(raw = {}) {
     translatorBatchSize: toPositiveInteger(raw.translatorBatchSize, DEFAULT_TRANSLATOR_BATCH_SIZE),
     useLocalStremioProxy: toBoolean(raw.useLocalStremioProxy, false),
     enableEmbeddedSubtitles: toBoolean(raw.enableEmbeddedSubtitles, true),
-    stremioEngineUrl: safeNormalizeEngineUrl(raw.stremioEngineUrl, DEFAULT_STREMIO_ENGINE_URL)
+    stremioEngineUrl: safeNormalizeEngineUrl(raw.stremioEngineUrl, DEFAULT_STREMIO_ENGINE_URL),
+
+    translatorProvider: normalizeTranslatorProvider(
+      raw.translatorProvider || process.env.TRANSLATOR_PROVIDER
+    ),
+    geminiModel: String(process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL).trim(),
+    geminiApiKeys: getGeminiApiKeys(),
+    geminiTemperature: toNumber(process.env.GEMINI_TEMPERATURE, 0.3),
+    geminiThinkingBudget: toNumber(process.env.GEMINI_THINKING_BUDGET, 0)
   };
 }
 
@@ -158,6 +190,8 @@ module.exports = {
   DEFAULT_STREMIO_ENGINE_URL,
   DEFAULT_TARGET_LANGUAGE_CODE,
   DEFAULT_TRANSLATOR_BATCH_SIZE,
+  DEFAULT_TRANSLATOR_PROVIDER,
+  DEFAULT_GEMINI_MODEL,
   base64UrlDecode,
   base64UrlEncode,
   configHash,
